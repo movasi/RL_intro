@@ -7,9 +7,8 @@ class Rewards:
     def __init__(self, actions=10):
         self._q_means = np.random.normal(0, 1, size=actions)
         self._best_action = np.argmax(self._q_means)
-        self._performed_actions = 0
-        self._avg = 0
-        self._optimal = 0
+        self._rewards = []
+        self._is_optimal = []
 
     def get_reward(self, action):
         mean = self._q_means[action]
@@ -18,25 +17,28 @@ class Rewards:
         return reward
 
     def _track_reward(self, action, reward):
-        self._performed_actions += 1
-        self._avg += 1.0 / self._performed_actions * (reward - self._avg)
-        self._optimal += action == self._best_action
+        self._rewards.append(reward)
+        self._is_optimal.append(action == self._best_action)
+    
+    @property
+    def rewards(self):
+        return self._rewards
 
-    def average_reward(self):
-        return self._avg
-
-    def optimal_action(self):
-        return self._optimal / self._performed_actions
+    @property
+    def optimal(self):
+        return self._is_optimal
 
 
 class ActionValue:
     def __init__(self, actions=10, alpha=0.1, init=0):
         self._qs = np.zeros(shape=(actions,)) + init
+        self._selections = np.zeros(shape=(actions,))
         self._alpha = alpha
 
     def update(self, action, reward):
         q = self._qs[action]
-        self._qs[action] += self._alpha * (reward-q)
+        self._selections[action] += 1
+        self._qs[action] += 1 / self._selections[action] * (reward-q)
 
     def greedy(self, epsilon=0):
         if np.random.uniform() < epsilon:
@@ -57,8 +59,7 @@ def run_experiments(experiments, actions, plays, epsilon, softmax, temperature):
     for _ in tqdm(range(experiments)):
         rewards = Rewards(actions=actions)
         av = ActionValue(actions=actions)
-        r_avg = []
-        r_optimal = []
+
         for _ in range(plays):
             if softmax:
                 action = av.softmax(temperature=temperature)
@@ -66,10 +67,8 @@ def run_experiments(experiments, actions, plays, epsilon, softmax, temperature):
                 action = av.greedy(epsilon=epsilon)
             r = rewards.get_reward(action)
             av.update(action, r)
-            r_avg.append(rewards.average_reward())
-            r_optimal.append(rewards.optimal_action())
-        average_rewards.append(np.asarray(r_avg))
-        optimal_actions.append(np.asarray(r_optimal))
+        average_rewards.append(np.asarray(rewards.rewards))
+        optimal_actions.append(np.asarray(rewards.optimal, dtype=np.int))
     average_rewards = np.stack(average_rewards, axis=0)
     average_rewards = np.mean(average_rewards, axis=0)
     optimal_actions = np.stack(optimal_actions, axis=0)
