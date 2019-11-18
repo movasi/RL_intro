@@ -19,7 +19,7 @@ class Rewards:
     def _track_reward(self, action, reward):
         self._rewards.append(reward)
         self._is_optimal.append(action == self._best_action)
-    
+
     @property
     def rewards(self):
         return self._rewards
@@ -91,10 +91,16 @@ def main():
         experiments, actions, plays, epsilon=0.1, softmax=False, temperature=0)
     experiment_outcomes['greedy, e=0.01'] = run_experiments(
         experiments, actions, plays, epsilon=0.01, softmax=False, temperature=0)
-    # experiment_outcomes['softmax, t=10'] = run_experiments(experiments, actions, plays, epsilon=0, softmax=True, temperature=10)
-    # experiment_outcomes['softmax, t=100'] = run_experiments(experiments, actions, plays, epsilon=0, softmax=True, temperature=100)
+    experiment_outcomes['softmax, t=1'] = run_experiments(
+        experiments, actions, plays, epsilon=0, softmax=True, temperature=1)
+    experiment_outcomes['softmax, t=4'] = run_experiments(
+        experiments, actions, plays, epsilon=0, softmax=True, temperature=4)
+    experiment_outcomes['softmax, t=10'] = run_experiments(
+        experiments, actions, plays, epsilon=0, softmax=True, temperature=10)
+    experiment_outcomes['softmax, t=100'] = run_experiments(
+        experiments, actions, plays, epsilon=0, softmax=True, temperature=100)
 
-    fig, axs = plt.subplots(2)
+    _, axs = plt.subplots(2)
     for title, (average_rewards, optimal_actions) in experiment_outcomes.items():
         axs[0].plot(average_rewards, label=title)
         axs[0].set_title('Average rewards')
